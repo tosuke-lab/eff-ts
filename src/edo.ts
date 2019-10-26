@@ -1,6 +1,7 @@
 import { AnyEffect } from './effect'
 import { Eff, pureEff, Pure, Impure } from './eff'
 import { ErrorEffect, throwError } from './error'
+import { Leaf } from './arr'
 
 type InferEffects<E> = E extends Eff<infer F, any> ? F : never
 export const edo = <E extends Eff<AnyEffect, any>, A>(
@@ -11,9 +12,9 @@ export const edo = <E extends Eff<AnyEffect, any>, A>(
   const handleError = (fx: Eff<any, any>): Eff<any, any> => {
     if (fx instanceof Pure) return fx as Pure<never, A>
     if (fx.effect instanceof ErrorEffect) {
-      return loop(fx.effect, undefined)
+      return loop(fx.effect.error, undefined)
     } else {
-      return new Impure<any, any>(fx.effect, (x: any) => handleError(fx.k(x)))
+      return new Impure<any, any>(fx.effect, new Leaf((x: any) => handleError(fx.k.apply(x))))
     }
   }
 

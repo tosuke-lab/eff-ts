@@ -1,4 +1,5 @@
-import { AnyEffect, EffectReturnType, Effect } from './effect'
+import { Arrs, Leaf } from './arr'
+import { AnyEffect, EffectReturnType } from './effect'
 
 export type Eff<E extends AnyEffect, A> = Pure<E, A> | Impure<E, A>
 
@@ -18,15 +19,15 @@ export class Pure<E extends AnyEffect, A> {
   }
 
   chain<F extends AnyEffect, B>(f: (x: A) => Eff<F, B>): Eff<E | F, B> {
-    return f(this._value)
+    return f(this._value) as Eff<E | F, B>
   }
 }
 
 export class Impure<E extends AnyEffect, A> {
   private _effect: E
-  private _k: <R extends EffectReturnType<E>>(x: R) => Eff<E, A>
+  private _k: Arrs<E, unknown, A>
 
-  constructor(effect: E, k: <R extends EffectReturnType<E>>(x: R) => Eff<E, A>) {
+  constructor(effect: E, k: Arrs<E, unknown, A>) {
     this._effect = effect
     this._k = k
   }
@@ -44,7 +45,7 @@ export class Impure<E extends AnyEffect, A> {
   }
 
   chain<F extends AnyEffect, B>(f: (x: A) => Eff<F, B>): Eff<E | F, B> {
-    return new Impure<E | F, B>(this._effect, x => this._k(x).chain(f))
+    return new Impure<E | F, B>(this._effect, this._k.chain(f))
   }
 }
 
@@ -52,7 +53,7 @@ export const pureEff = <A>(x: A): Eff<never, A> => new Pure<never, A>(x)
 
 export const liftEff = <AS extends any[], E extends AnyEffect>(effect: new (...args: AS) => E) => (
   ...args: AS
-): Eff<E, EffectReturnType<E>> => new Impure(new effect(...args), pureEff)
+): Eff<E, EffectReturnType<E>> => new Impure(new effect(...args), new Leaf(pureEff))
 
 export const runEff = <A>(eff: Eff<never, A>): A => {
   if (eff instanceof Pure) {

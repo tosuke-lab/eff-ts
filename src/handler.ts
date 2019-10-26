@@ -1,5 +1,6 @@
 import { AnyEffect, EffectReturnType, Effect } from './effect'
 import { Eff, Pure, Impure } from './eff'
+import { Leaf } from './arr'
 
 type Constructor<E> = new (...args: any[]) => E
 type ChainFn<E extends AnyEffect, R> = (effect: E, k: (x: EffectReturnType<E>) => R) => R
@@ -16,12 +17,12 @@ type RunnerConstructFn<A, B> = <MS extends Matcher<any, B>[]>(
 ) => (fx: Eff<InferMatchersEffect<MS>, A>) => B
 
 const runnerImpl = <A, B>(pure: (x: A) => B): RunnerConstructFn<A, B> => (...matchers) =>
-  function handle(fx: Eff<AnyEffect, A>): B {
+  function handle(fx: Eff<any, A>): B {
     if (fx instanceof Pure) return pure(fx.value)
     const result = (matchers as Matcher<AnyEffect, B>[]).find(m => fx.effect instanceof m[0])
     if (result) {
       const fn = result[1]
-      const k = (x: any): B => handle(fx.k(x))
+      const k = (x: any): B => handle(fx.k.apply(x))
       return fn(fx.effect, k)
     }
     throw new Error('Unhandlable Effect')
@@ -41,15 +42,15 @@ type HandlerConstructFn<A, B, AE extends AnyEffect> = <MS extends Matcher<any, E
 const handlerImpl = <A, B, AE extends AnyEffect>(pure: (x: A) => Eff<AE, B>): HandlerConstructFn<A, B, AE> => (
   ...matchers
 ) =>
-  function handle(fx: Eff<AnyEffect, A>): Eff<any, B> {
+  function handle(fx: Eff<any, A>): Eff<any, B> {
     if (fx instanceof Pure) return pure(fx.value)
     const result = (matchers as Matcher<AnyEffect, Eff<any, B>>[]).find(m => fx.effect instanceof m[0])
     if (result) {
       const fn = result[1]
-      const k = (x: any): Eff<any, B> => handle(fx.k(x))
+      const k = (x: any): Eff<any, B> => handle(fx.k.apply(x))
       return fn(fx.effect, k)
     } else {
-      return new Impure(fx.effect, (x: any) => handle(fx.k(x)))
+      return new Impure(fx.effect, new Leaf((x: any) => handle(fx.k.apply(x))))
     }
   }
 

@@ -1,0 +1,14 @@
+{
+  "name": "eff-ts",
+  "version": "0.0.1",
+  "description": "Extensible Effects for TypeScript",
+  "main": "lib/index.js",
+  "repository": "https://github.com/tosuke-lab/eff-ts.git",
+  "author": "Tosuke <tasukeprg@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^1.18.2",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.7.1-rc"
+  }
+}

@@ -25,9 +25,9 @@ export class Pure<E extends AnyEffect, A> {
 
 export class Impure<E extends AnyEffect, A> {
   private _effect: E
-  private _k: Arrs<E, unknown, A>
+  private _k: Arrs<E, EffectReturnType<E>, A>
 
-  constructor(effect: E, k: Arrs<E, unknown, A>) {
+  constructor(effect: E, k: Arrs<E, EffectReturnType<E>, A>) {
     this._effect = effect
     this._k = k
   }

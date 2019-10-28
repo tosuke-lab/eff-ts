@@ -4,9 +4,9 @@ import { Eff, Pure, Impure } from './eff'
 export type Arrs<E extends AnyEffect, A, B> = Leaf<E, A, B> | Node<E, A, any, B>
 
 export class Leaf<E extends AnyEffect, A, B> {
-  constructor(readonly f: (x: A) => Eff<E, B>) {}
+  constructor(readonly f: <AA extends A>(x: AA) => Eff<E, B>) {}
 
-  chain<F extends AnyEffect, C>(f: (x: B) => Eff<F, C>): Arrs<E | F, A, C> {
+  chain<F extends AnyEffect, C>(f: <BB extends B>(x: BB) => Eff<F, C>): Arrs<E | F, A, C> {
     return this.concat(new Leaf(f))
   }
 
@@ -22,7 +22,7 @@ export class Leaf<E extends AnyEffect, A, B> {
 export class Node<E extends AnyEffect, A, X, B> {
   constructor(readonly left: Arrs<E, A, X>, readonly right: Arrs<E, X, B>) {}
 
-  chain<F extends AnyEffect, C>(f: (x: B) => Eff<F, C>): Arrs<E | F, A, C> {
+  chain<F extends AnyEffect, C>(f: <BB extends B>(x: BB) => Eff<F, C>): Arrs<E | F, A, C> {
     return this.concat(new Leaf(f))
   }
 

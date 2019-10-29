@@ -1,24 +1,5 @@
-import { Effect } from './effect'
-import { Eff, liftEff, pureEff } from './eff'
-import { createHandler, createRunner } from './handler'
-
-export class ErrorEffect extends Effect<never> {
-  constructor(readonly error: unknown) {
-    super()
-  }
-}
-
-export const throwError = liftEff(ErrorEffect)
-
-export const runError = createRunner(
-  <A>(x: A) => x,
-  ({ construct, match }) =>
-    construct(
-      match(ErrorEffect, (e, _) => {
-        throw e.error
-      }),
-    ),
-)
+import { AnyEffect } from './effect'
+import { Eff, pureEff } from './eff'
 
 export type Either<A, B> = Left<A> | Right<B>
 
@@ -30,12 +11,5 @@ export class Right<A> {
   constructor(readonly right: A) {}
 }
 
-export const handleError = createHandler()(
-  <A>(x: A): Eff<never, Either<unknown, A>> => pureEff(new Right(x)),
-  ({ construct, match }) =>
-    construct(
-      match(ErrorEffect, (e, _) => {
-        return pureEff(new Left(e.error))
-      }),
-    ),
-)
+export const handleError = <IE extends AnyEffect, A>(fx: Eff<IE, A>) =>
+  fx.chain(x => pureEff<Either<unknown, A>>(new Right(x))).catch(err => pureEff(new Left(err)))

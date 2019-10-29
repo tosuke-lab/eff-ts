@@ -1,7 +1,6 @@
-import { runError } from './error'
 import { edo } from './edo'
 import { Effect } from './effect'
-import { liftEff, pureEff } from './eff'
+import { liftEff, pureEff, runEff, throwError } from './eff'
 import { createHandler } from './handler'
 
 class TellEffect extends Effect<void> {
@@ -22,18 +21,18 @@ const writerHandler = createHandler(pureEff, ({ construct, match }) =>
 
 const error = () =>
   edo(function*() {
+    yield tell('hoge')
     yield tell('piyo')
-    throw new Error('error!')
+    throw new Error('error')
   })
 
 const main = () =>
   edo(function*() {
     try {
-      yield tell('hoge')
       yield error()
     } catch {
-      console.log('caught!')
+      yield tell('caught!')
     }
   })
 
-runError(main().handle(writerHandler))
+runEff(main().handle(writerHandler))

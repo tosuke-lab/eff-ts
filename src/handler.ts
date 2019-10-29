@@ -1,6 +1,6 @@
 import { AnyEffect, EffectReturnType, Effect } from './effect'
 import { Eff, Pure, Impure } from './eff'
-import { Leaf } from './arr'
+import { Leaf, Err } from './arr'
 
 type Constructor<E> = new (...args: any[]) => E
 type ChainFn<E extends AnyEffect, KR, R> = (effect: E, k: (x: EffectReturnType<E>) => KR) => R
@@ -18,7 +18,10 @@ type RunnerConstructFn<A, B> = <MS extends Matcher<any, B, B>[]>(
 
 const runnerImpl = <A, B>(pure: (x: A) => B): RunnerConstructFn<A, B> => (...matchers) =>
   function handle(fx: Eff<any, A>): B {
-    if (fx instanceof Pure) return pure(fx.value)
+    if (fx instanceof Pure) {
+      if (fx.value instanceof Err) throw fx.value.err
+      return pure(fx.value)
+    }
     const result = (matchers as Matcher<AnyEffect, B, B>[]).find(m => fx.effect instanceof m[0])
     if (result) {
       const fn = result[1]
@@ -52,7 +55,7 @@ const handlerImpl = <A, B, PureE extends AnyEffect>(pure: (x: A) => Eff<PureE, B
   ...matchers
 ) =>
   function handle(fx: Eff<any, A>): Eff<any, B> {
-    if (fx instanceof Pure) return pure(fx.value)
+    if (fx instanceof Pure) return fx.chain(pure)
     const result = (matchers as Matcher<AnyEffect, Eff<any, B>, Eff<any, B>>[]).find(m => fx.effect instanceof m[0])
     if (result) {
       const fn = result[1]

@@ -21,6 +21,10 @@ export class Pure<E extends AnyEffect, A> {
   chain<F extends AnyEffect, B>(f: (x: A) => Eff<F, B>): Eff<E | F, B> {
     return f(this._value) as Eff<E | F, B>
   }
+
+  handle<F extends AnyEffect, B>(handler: (fx: Eff<E, A>) => Eff<F, B>): Eff<F, B> {
+    return handler(this)
+  }
 }
 
 export class Impure<E extends AnyEffect, A> {
@@ -46,6 +50,10 @@ export class Impure<E extends AnyEffect, A> {
 
   chain<F extends AnyEffect, B>(f: (x: A) => Eff<F, B>): Eff<E | F, B> {
     return new Impure<E | F, B>(this._effect, this._k.chain(f))
+  }
+
+  handle<F extends AnyEffect, B>(handler: (fx: Eff<E, A>) => Eff<F, B>): Eff<F, B> {
+    return handler(this)
   }
 }
 

@@ -11,7 +11,7 @@ class TellEffect extends Effect<void> {
 }
 const tell = liftEff(TellEffect)
 
-const handleWriter = createHandler()(pureEff, ({ construct, match }) =>
+const writerHandler = createHandler(pureEff, ({ construct, match }) =>
   construct(
     match(TellEffect, (e, k) => {
       console.log(e.msg)
@@ -36,4 +36,4 @@ const main = () =>
     }
   })
 
-runError(handleWriter(main()))
+runError(main().handle(writerHandler))

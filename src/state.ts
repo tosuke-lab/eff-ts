@@ -1,17 +1,41 @@
-import { Effect, AnyEffect } from './effect'
+import { Effect, Return, AnyEffect } from './effect'
 import { Eff, Pure, Impure } from './eff'
 import { Leaf } from './arr'
 
-export const createState = <S, Tag extends string = ''>() => {
-  const type = Symbol()
+declare const tag: unique symbol
 
-  class GetEffect extends Effect<S> {
-    [type]!: Tag
+interface GetEffect<S, Tag> extends Effect<S> {
+  [tag]: Tag
+  readonly name: 'GetEffect'
+}
+
+interface SetEffect<S, Tag> extends Effect<void> {
+  [tag]: Tag
+  readonly name: 'SetEffect'
+  readonly value: S
+}
+
+type StateEffect<S, Tag> = GetEffect<S, Tag> | SetEffect<S, Tag>
+
+type State<S, Tag> = {
+  GetEffect: new () => GetEffect<S, Tag>
+  SetEffect: new (value: S) => SetEffect<S, Tag>
+  handle: (initial: S) => <IE extends AnyEffect, A>(fx: Eff<IE, A>) => Eff<Exclude<IE, StateEffect<S, Tag>>, [A, S]>
+  get: () => Eff<GetEffect<S, Tag>, S>
+  set: (value: S) => Eff<SetEffect<S, Tag>, void>
+  modify: (f: (state: S) => S) => Eff<StateEffect<S, Tag>, void>
+}
+
+export const createState = <S, Tag = ''>(): State<S, Tag> => {
+  const GetEffect = class GetEffect extends Effect<S> {
+    [Return]!: S;
+    [tag]!: Tag
     readonly name = 'GetEffect' as const
   }
 
-  class SetEffect extends Effect<void> {
-    [type]!: Tag
+  const SetEffect = class SetEffect extends Effect<void> {
+    [Return]!: void;
+    [tag]!: Tag
     readonly name = 'SetEffect' as const
 
     constructor(readonly value: S) {
@@ -19,15 +43,12 @@ export const createState = <S, Tag extends string = ''>() => {
     }
   }
 
-  const isGetEff = <A>(fx: Impure<AnyEffect, A>): fx is Impure<GetEffect, A> => fx.effect instanceof GetEffect
-  const isSetEff = <A>(fx: Impure<AnyEffect, A>): fx is Impure<SetEffect, A> => fx.effect instanceof SetEffect
+  const isGetEff = <A>(fx: Impure<AnyEffect, A>): fx is Impure<GetEffect<S, Tag>, A> => fx.effect instanceof GetEffect
+  const isSetEff = <A>(fx: Impure<AnyEffect, A>): fx is Impure<SetEffect<S, Tag>, A> => fx.effect instanceof SetEffect
   const handle = (initial: S) => <IE extends AnyEffect, A>(
     fx: Eff<IE, A>,
-  ): Eff<Exclude<IE, GetEffect | SetEffect>, [A, S]> => {
-    function internal<IE extends AnyEffect, A>(
-      f: Eff<IE, A>,
-      state: S,
-    ): Eff<Exclude<IE, GetEffect | SetEffect>, [A, S]> {
+  ): Eff<Exclude<IE, StateEffect<S, Tag>>, [A, S]> => {
+    function internal<IE extends AnyEffect, A>(f: Eff<IE, A>, state: S): Eff<Exclude<IE, StateEffect<S, Tag>>, [A, S]> {
       if (f instanceof Pure) return (f as Eff<never, A>).map(x => [x, state])
       if (isGetEff(f)) {
         return internal(f.k.apply(state), state)

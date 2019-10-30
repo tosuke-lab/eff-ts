@@ -1,4 +1,4 @@
-import { Effect } from './effect'
+import { Effect, Return, AnyEffect } from './effect'
 import { createHandler } from './handler'
 import { Eff } from './eff'
 
@@ -32,11 +32,24 @@ export class Cons<A> {
   }
 }
 
-export const createWriter = <W, Tag = ''>() => {
-  const type = Symbol()
+declare const tag: unique symbol
 
-  class TellEffect extends Effect<void> {
-    [type]!: Tag
+interface TellEffect<W, Tag> extends Effect<void> {
+  [tag]: Tag
+  readonly name: 'TellEffect'
+  readonly value: W
+}
+
+type Writer<W, Tag> = {
+  TellEffect: new (value: W) => TellEffect<W, Tag>
+  handle: <IE extends AnyEffect, A>(fx: Eff<IE, A>) => Eff<Exclude<IE, TellEffect<W, Tag>>, [A, List<W>]>
+  tell: (value: W) => Eff<TellEffect<W, Tag>, void>
+}
+
+export const createWriter = <W, Tag = ''>(): Writer<W, Tag> => {
+  const TellEffect = class TellEffect extends Effect<void> {
+    [Return]!: void;
+    [tag]!: Tag
     readonly name = 'TellEffect' as const
 
     constructor(readonly value: W) {

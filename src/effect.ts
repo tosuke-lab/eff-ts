@@ -1,4 +1,4 @@
-declare const Return: unique symbol
+export declare const Return: unique symbol
 
 export abstract class Effect<A> {
   [Return]!: A

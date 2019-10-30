@@ -3,9 +3,14 @@
   "version": "0.0.1",
   "description": "Extensible Effects for TypeScript",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "repository": "https://github.com/tosuke-lab/eff-ts.git",
   "author": "Tosuke <tasukeprg@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "tsc"
+  },
   "devDependencies": {
     "prettier": "^1.18.2",
     "ts-node": "^8.4.1",

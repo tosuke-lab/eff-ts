@@ -8,7 +8,7 @@
   "author": "Tosuke <tasukeprg@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "prepack": "npm run build",
+    "postpack": "npm run build",
     "build": "tsc"
   },
   "devDependencies": {

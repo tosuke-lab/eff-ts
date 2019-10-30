@@ -2,6 +2,36 @@ import { Result, Err, Arrs, Leaf } from './arr'
 import { AnyEffect, EffectReturnType } from './effect'
 
 export type Eff<E extends AnyEffect, A> = Pure<E, A> | Impure<E, A>
+export namespace Eff {
+  export type TypeOf<F> = F extends Eff<any, infer A> ? A : never
+  export type EffectOf<F> = F extends Eff<infer E, any> ? E : never
+}
+
+const pureEff = <A>(x: A): Eff<never, A> => new Pure<never, A>(x)
+
+const throwError = (err: unknown): Eff<never, never> => new Pure<never, never>(new Err(err))
+
+const liftEff = <AS extends any[], E extends AnyEffect>(effect: new (...args: AS) => E) => (
+  ...args: AS
+): Eff<E, EffectReturnType<E>> => new Impure(new effect(...args), new Leaf(pureEff))
+
+const runEff = <A>(eff: Eff<never, A>): A => {
+  if (eff instanceof Pure) {
+    if (eff.value instanceof Err) {
+      throw eff.value.err
+    } else {
+      return eff.value
+    }
+  }
+  throw new Error('Cannot run Eff which has effects')
+}
+
+export const Eff = Object.freeze({
+  pure: pureEff,
+  throwError: throwError,
+  liftF: liftEff,
+  run: runEff,
+})
 
 export class Pure<E extends AnyEffect, A> {
   private _value: Result<A>
@@ -75,23 +105,4 @@ export class Impure<E extends AnyEffect, A> {
   handle<F extends AnyEffect, B>(handler: (fx: Eff<E, A>) => Eff<F, B>): Eff<F, B> {
     return handler(this)
   }
-}
-
-export const pureEff = <A>(x: A): Eff<never, A> => new Pure<never, A>(x)
-
-export const throwError = (err: unknown): Eff<never, never> => new Pure<never, never>(new Err(err))
-
-export const liftEff = <AS extends any[], E extends AnyEffect>(effect: new (...args: AS) => E) => (
-  ...args: AS
-): Eff<E, EffectReturnType<E>> => new Impure(new effect(...args), new Leaf(pureEff))
-
-export const runEff = <A>(eff: Eff<never, A>): A => {
-  if (eff instanceof Pure) {
-    if (eff.value instanceof Err) {
-      throw eff.value.err
-    } else {
-      return eff.value
-    }
-  }
-  throw new Error('Cannot run Eff which has effects')
 }

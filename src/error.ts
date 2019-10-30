@@ -1,5 +1,5 @@
 import { AnyEffect } from './effect'
-import { Eff, pureEff } from './eff'
+import { Eff } from './eff'
 
 export type Either<A, B> = Left<A> | Right<B>
 
@@ -12,4 +12,4 @@ export class Right<A> {
 }
 
 export const handleError = <IE extends AnyEffect, A>(fx: Eff<IE, A>) =>
-  fx.chain(x => pureEff<Either<unknown, A>>(new Right(x))).catch(err => pureEff(new Left(err)))
+  fx.chain(x => Eff.pure<Either<unknown, A>>(new Right(x))).catch(err => Eff.pure(new Left(err)))

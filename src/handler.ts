@@ -44,7 +44,7 @@ interface OtherEffects extends Effect<never> {
 }
 
 type InferMatchersReturns<M extends any[]> = M[number] extends Matcher<any, any, infer R> ? R : never
-type InferEffects<F extends any> = Exclude<F extends Eff<infer E, any> ? E : never, OtherEffects>
+type InferEffects<F extends any> = Exclude<Eff.EffectOf<F>, OtherEffects>
 type HandlerConstructFn<A, B> = <MS extends Matcher<any, Eff<OtherEffects, B>, Eff<AnyEffect, B>>[]>(
   ...matchers: MS
 ) => <IE extends AnyEffect>(

@@ -1,6 +1,6 @@
 import { edo } from './edo'
 import { Effect } from './effect'
-import { liftEff, pureEff, runEff, throwError } from './eff'
+import { Eff } from './eff'
 import { createHandler } from './handler'
 
 class TellEffect extends Effect<void> {
@@ -8,9 +8,9 @@ class TellEffect extends Effect<void> {
     super()
   }
 }
-const tell = liftEff(TellEffect)
+const tell = Eff.liftF(TellEffect)
 
-const writerHandler = createHandler(pureEff, ({ construct, match }) =>
+const writerHandler = createHandler(Eff.pure, ({ construct, match }) =>
   construct(
     match(TellEffect, (e, k) => {
       console.log(e.msg)
@@ -35,4 +35,4 @@ const main = () =>
     }
   })
 
-runEff(main().handle(writerHandler))
+Eff.run(main().handle(writerHandler))

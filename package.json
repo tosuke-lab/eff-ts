@@ -1,5 +1,5 @@
 {
-  "name": "eff-ts",
+  "name": "@tosuke/eff-ts",
   "version": "0.0.1",
   "description": "Extensible Effects for TypeScript",
   "main": "lib/index.js",
@@ -7,8 +7,12 @@
   "repository": "https://github.com/tosuke-lab/eff-ts.git",
   "author": "Tosuke <tasukeprg@gmail.com>",
   "license": "MIT",
+  "files": [
+    "package.json",
+    "lib/**/*"
+  ],
   "scripts": {
-    "postinstall": "test -e src && npm run build",
+    "prepare": "npm run build",
     "build": "tsc"
   },
   "devDependencies": {

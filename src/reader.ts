@@ -9,21 +9,21 @@ interface AskEffect<Env, Tag> extends Effect<Env> {
   readonly name: "AskEffect";
 }
 
+type ReaderHandler<Env, Tag> = <IE extends AnyEffect, A>(
+  fx: Eff<IE, A>
+) => Eff<Exclude<IE, AskEffect<Env, Tag>>, A>;
+
 type Reader<Env, Tag> = {
   AskEffect: new () => AskEffect<Env, Tag>;
-  handle: (
-    env: Env
-  ) => <IE extends AnyEffect, A>(
-    fx: Eff<IE, A>
-  ) => Eff<Exclude<IE, AskEffect<Env, Tag>>, A>;
+  handle: (env: Env) => ReaderHandler<Env, Tag>;
+  local: (
+    f: (env: Env) => Env
+  ) => <FX extends Eff<AnyEffect, any>>(fx: FX) => FX;
   ask: () => Eff<AskEffect<Env, Tag>, Env>;
 };
 
 export const createReader = <Env, Tag = "">(): Reader<Env, Tag> => {
-  const AskEffect: Reader<
-    Env,
-    Tag
-  >["AskEffect"] = class AskEffect extends Effect<Env> {
+  const AskEffect = class AskEffect extends Effect<Env> {
     readonly name = "AskEffect" as const;
     [tag]!: Tag;
   };
@@ -35,11 +35,16 @@ export const createReader = <Env, Tag = "">(): Reader<Env, Tag> => {
         })
       )
     );
-
   const ask = Eff.liftF(AskEffect);
+
+  const local = (f: (env: Env) => Env) => <FX extends Eff<AnyEffect, any>>(
+    fx: FX
+  ): FX => ask().chain(e => handle(f(e))(fx)) as FX;
+
   return {
     AskEffect,
     handle,
-    ask
+    ask,
+    local
   };
 };

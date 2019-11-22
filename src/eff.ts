@@ -15,7 +15,10 @@ const throwError = (err: unknown): Eff<never, never> =>
 const liftEff = <AS extends any[], E extends AnyEffect>(
   effect: new (...args: AS) => E
 ) => (...args: AS): Eff<E, EffectReturnType<E>> =>
-  new Impure(new effect(...args), new Leaf(pureEff));
+  new Impure(
+    new effect(...args),
+    Leaf.ok<E, EffectReturnType<E>, EffectReturnType<E>>(pureEff)
+  );
 
 const runEff = <A>(eff: Eff<never, A>): A => {
   if (eff instanceof Pure) {

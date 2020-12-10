@@ -12,12 +12,11 @@
     "lib/**/*"
   ],
   "scripts": {
-    "prepare": "npm run build",
     "build": "tsc"
   },
   "devDependencies": {
     "prettier": "^1.18.2",
     "ts-node": "^8.4.1",
-    "typescript": "^3.7.1-rc"
+    "typescript": "^4.1.2"
   }
 }
